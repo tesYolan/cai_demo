@@ -23,6 +23,16 @@ class LLM_Interface:
         if self.system_prompt:
             resp = self.predict(self.system_prompt)
             print(resp)
+    
+    def reset_internal_state(self, system_prompt):
+        self.dialog = []
+        self.system_prompt = system_prompt
+        self.max_prompt_length = self.context_length - self.max_generation_length
+        if self.system_prompt:
+            resp = self.predict(self.system_prompt)
+            print(resp)
+
+
 
     def predict(self, prompt: str):
         "Generate text give a prompt"
@@ -111,35 +121,34 @@ class LLM_Interface:
 
         return dialog_tokens
 
-app = FastAPI()
 
+def create_llm_model():
+    llm_model = LLM_Interface()
+    return llm_model
+
+llm_model = create_llm_model()
+app = FastAPI()
 @functools.lru_cache(maxsize=1)
 def get_llm_model(config):
-
-    # construct system prompt from this - 
-    # name, greeting, short_description, long_description, character_voice, enable_image
-
     config = dict(config)
 
     sys_p = F"""You are roleplaying a character {config['name']}. For question who are you? You answer {config['name']}, 
     you start your greeting with {config['greeting']}. You describe yourself as {config['short_description']}. 
     You biography is {config['long_description']}. 
     Your voice is {config['character_voice']} Additionally, you answer as the character and knowledge you have of {config['name']}. Do you understand?"""
-    llm_model = LLM_Interface(system_prompt=sys_p)
+    llm_model.reset_internal_state(sys_p)
     return llm_model
 
 @app.post("/setup_character")
 async def setup(prompt: dict):
     # change from json to text
     print(prompt['config'])
-    get_llm_model.cache_clear()
-    llm_model = get_llm_model(tuple(sorted(prompt['config'].items())))
+    get_llm_model(tuple(sorted(prompt['config'].items())))
 
     return {'response':'loaded_model'}
 @app.post("/chat_character")
 async def predict(prompt: dict):
     # change from json to text
-
     config = prompt['config']
     model = get_llm_model(tuple(sorted(config.items())))
     response = model.predict(prompt['prompt'])
