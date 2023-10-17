@@ -1,6 +1,41 @@
 import gradio as gr
 import random
 import time
+from llm_handler import make_character_setup, chat_character
+
+
+def setup_new_character(name, greeting, short_description, long_description, character_voice, enable_image):
+    config = {'config':{
+        "name": name,
+        "greeting": greeting,
+        "short_description": short_description,
+        "long_description": long_description,
+        "character_voice": character_voice,
+        "enable_image": enable_image
+    }}
+    response = make_character_setup(config)
+
+    gr.Info("Character with name {} - {}".format(name, response['response']))
+
+    # how do i clear the chatinterface history here
+    # https://discuss.huggingface.co/t/clear-chat-interface/49866/6
+    return []
+
+def chat_character(name, greeting, short_description, long_description, character_voice, enable_image, message):
+    config = {"config":{
+        "name": name,
+        "greeting": greeting,
+        "short_description": short_description,
+        "long_description": long_description,
+        "character_voice": character_voice,
+        "enable_image": enable_image
+    }, "prompt":message}
+
+    response = chat_character(config, "")
+
+    return response['response']
+
+
 
 
 with gr.Blocks(theme="gradio/monochrome") as demo:
@@ -30,6 +65,9 @@ with gr.Blocks(theme="gradio/monochrome") as demo:
             chat_interface = gr.ChatInterface(response, title="Character Bot")
 
             clear = gr.ClearButton([chat_interface])
+
+            # this one calls the new character setup
+            start_new.click(inputs=[name, greeting, short_description, long_description, character_voice, enable_image], outputs=[chat_interface.chatbot_state])
 
 
 

@@ -2,6 +2,7 @@ import ctranslate2
 import sentencepiece as spm
 import os
 from fastapi import FastAPI
+import functools
 
 B_INST, E_INST = "[INST]", "[/INST]"
 B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n" 
@@ -108,13 +109,26 @@ class LLM_Interface:
         return dialog_tokens
 
 app = FastAPI()
-llm_model = LLM_Interface()
 
-@app.post("/affirmation_gen")
+@functools.lru_cache(maxsize=1)
+def get_llm_model(config):
+    llm_model = LLM_Interface(config)
+    return llm_model
+
+@app.post("/setup_character")
+async def setup(prompt: dict):
+    # change from json to text
+    print(prompt['config'])
+    llm_model = get_llm_model(tuple(sorted(prompt['config'].items())))
+
+    return {'response':'loaded_model'}
+@app.post("/chat_character")
 async def predict(prompt: dict):
     # change from json to text
-    print(prompt)
-    response = llm_model.predict(prompt['prompt'])
+
+    config = prompt['config']
+    model = get_llm_model(tuple(sorted(config.items)))
+    response = model.predict(prompt['prompt'])
 
     return {'response':response}
 

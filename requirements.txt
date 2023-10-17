@@ -2,3 +2,4 @@ ctranslate2
 sentencepiece
 uvicorn
 fastapi
+gradio
