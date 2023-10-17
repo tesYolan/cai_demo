@@ -132,6 +132,7 @@ def get_llm_model(config):
 async def setup(prompt: dict):
     # change from json to text
     print(prompt['config'])
+    get_llm_model.cache_clear()
     llm_model = get_llm_model(tuple(sorted(prompt['config'].items())))
 
     return {'response':'loaded_model'}

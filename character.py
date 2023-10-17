@@ -4,7 +4,18 @@ import time
 from llm_handler import make_character_setup, make_chat_character
 
 
+def check_empty_vars(**kwargs):
+    empty_vars = []
+    for var_name, var_value in kwargs.items():
+        if not var_value:
+            empty_vars.append(var_name)
+    if empty_vars:
+        gr.Warning(f"Please fill in the following fields: {', '.join(empty_vars)}")
+    return empty_vars
 def setup_new_character(name, greeting, short_description, long_description, character_voice, enable_image):
+    empty_vars = check_empty_vars(name=name, greeting=greeting, short_description=short_description, long_description=long_description)
+    if empty_vars: 
+        return []
     config = {'config':{
         "name": name,
         "greeting": greeting,
@@ -16,13 +27,11 @@ def setup_new_character(name, greeting, short_description, long_description, cha
     response = make_character_setup(config)
     print(response)
 
-    # gr.Info("Character with name {} - {}".format(name, response['response']))
-
-    # how do i clear the chatinterface history here
-    # https://discuss.huggingface.co/t/clear-chat-interface/49866/6
+    gr.Info("Character with name {} - Try Chatting".format(name ))
     return []
 
 def chat_character(message, history, name, greeting, short_description, long_description, character_voice, enable_image):
+    empty_vars = check_empty_vars(name=name, greeting=greeting, short_description=short_description, long_description=long_description)
     config = {"config":{
         "name": name,
         "greeting": greeting,
@@ -34,12 +43,9 @@ def chat_character(message, history, name, greeting, short_description, long_des
 
     response = make_chat_character(config, "")
     print(response)
+    # TODO 
 
     return response['response']
-
-
-
-
 
 with gr.Blocks(theme="gradio/monochrome") as demo:
     gr.Markdown('<h1 style="text-align: center;"> Character Describer </h1>')
@@ -69,13 +75,9 @@ with gr.Blocks(theme="gradio/monochrome") as demo:
                 return bot_message
             chat_interface = gr.ChatInterface(chat_character, additional_inputs=[name, greeting, short_description, long_description, character_voice, enable_image], 
                                               title="Character Bot")
-
             clear = gr.ClearButton([chat_interface])
-
             # this one calls the new character setup
             start_new.click(fn=setup_new_character, inputs=[name, greeting, short_description, long_description, character_voice, enable_image], outputs=[chat_interface.chatbot_state])
 
-
-
 if __name__ == "__main__":
-    demo.launch(debug=True, server_port = 9000, server_name="0.0.0.0") 
+    demo.queue(concurrency_count=3, api_open=False).launch(debug=True, server_port = 9000, server_name="0.0.0.0") 
