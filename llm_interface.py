@@ -122,7 +122,7 @@ def get_llm_model(config):
     you start your greeting with {config['greeting']}. You describe yourself as {config['short_description']}. 
     You biography is {config['long_description']}. 
     Your voice is {config['character_voice']} """
-    llm_model = LLM_Interface(config)
+    llm_model = LLM_Interface(system_prompt=sys_p)
     return llm_model
 
 @app.post("/setup_character")
