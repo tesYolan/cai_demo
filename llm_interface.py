@@ -13,7 +13,7 @@ class LLM_Interface:
         self.generator = ctranslate2.Generator(model_location, device="cuda")
         self.sp = spm.SentencePieceProcessor(os.path.join(model_location, "tokenizer.model"))
 
-        self.dialogue = []
+        self.dialog = []
         self.system_prompt = system_prompt
 
         self.context_length = 4096
