@@ -16,6 +16,9 @@ class LLM_Interface:
         self.dialog = []
         self.system_prompt = system_prompt
 
+        if self.system_prompt:
+            self.dialog.append({"role": "system", "content": system_prompt})
+
         self.context_length = 4096
         self.max_generation_length = 512
 
