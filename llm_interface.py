@@ -16,13 +16,13 @@ class LLM_Interface:
         self.dialog = []
         self.system_prompt = system_prompt
 
-        if self.system_prompt:
-            self.dialog.append({"role": "system", "content": system_prompt})
-
         self.context_length = 4096
         self.max_generation_length = 512
 
         self.max_prompt_length = self.context_length - self.max_generation_length
+        if self.system_prompt:
+            resp = self.predict(self.system_prompt)
+            print(resp)
 
     def predict(self, prompt: str):
         "Generate text give a prompt"
@@ -121,10 +121,10 @@ def get_llm_model(config):
 
     config = dict(config)
 
-    sys_p = F"""Your name chatting with user {config['name']}, 
+    sys_p = F"""You are roleplaying a character {config['name']}. For question who are you? You answer {config['name']}, 
     you start your greeting with {config['greeting']}. You describe yourself as {config['short_description']}. 
     You biography is {config['long_description']}. 
-    Your voice is {config['character_voice']} """
+    Your voice is {config['character_voice']} Additionally, you answer as the character and knowledge you have of {config['name']}. Do you understand?"""
     llm_model = LLM_Interface(system_prompt=sys_p)
     return llm_model
 
