@@ -7,6 +7,7 @@ import functools
 B_INST, E_INST = "[INST]", "[/INST]"
 B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
 
+# the llama interface is almost entirely from ctranslate2 chat interface code. 
 
 class LLM_Interface:
     def __init__(self, model_location="/home/dlpc/llama-2-7b-chat-ct2", system_prompt="Return a character description."):
