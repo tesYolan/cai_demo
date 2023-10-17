@@ -112,6 +112,16 @@ app = FastAPI()
 
 @functools.lru_cache(maxsize=1)
 def get_llm_model(config):
+
+    # construct system prompt from this - 
+    # name, greeting, short_description, long_description, character_voice, enable_image
+
+    config = dict(config)
+
+    sys_p = F"""Your name chatting with user {config['name']}, 
+    you start your greeting with {config['greeting']}. You describe yourself as {config['short_description']}. 
+    You biography is {config['long_description']}. 
+    Your voice is {config['character_voice']} """
     llm_model = LLM_Interface(config)
     return llm_model
 
@@ -127,7 +137,7 @@ async def predict(prompt: dict):
     # change from json to text
 
     config = prompt['config']
-    model = get_llm_model(tuple(sorted(config.items)))
+    model = get_llm_model(tuple(sorted(config.items())))
     response = model.predict(prompt['prompt'])
 
     return {'response':response}
