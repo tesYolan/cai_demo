@@ -5,13 +5,15 @@ from fastapi import FastAPI
 import functools
 
 B_INST, E_INST = "[INST]", "[/INST]"
-B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n" 
+B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
+
 
 class LLM_Interface:
     def __init__(self, model_location="/home/dlpc/llama-2-7b-chat-ct2", system_prompt="Return a character description."):
-        # may be in the future 'cpu' / 'cuda' when sharing with them. 
+        # may be in the future 'cpu' / 'cuda' when sharing with them.
         self.generator = ctranslate2.Generator(model_location, device="cuda")
-        self.sp = spm.SentencePieceProcessor(os.path.join(model_location, "tokenizer.model"))
+        self.sp = spm.SentencePieceProcessor(
+            os.path.join(model_location, "tokenizer.model"))
 
         self.dialog = []
         self.system_prompt = system_prompt
@@ -23,7 +25,7 @@ class LLM_Interface:
         if self.system_prompt:
             resp = self.predict(self.system_prompt)
             print(resp)
-    
+
     def reset_internal_state(self, system_prompt):
         self.dialog = []
         self.system_prompt = system_prompt
@@ -31,8 +33,6 @@ class LLM_Interface:
         if self.system_prompt:
             resp = self.predict(self.system_prompt)
             print(resp)
-
-
 
     def predict(self, prompt: str):
         "Generate text give a prompt"
@@ -46,18 +46,18 @@ class LLM_Interface:
                 self.dialog = [self.dialog[0]] + self.dialog[3:]
             else:
                 self.dialog = self.dialog[2:]
-        
-        step_results = self.generator.generate_tokens(prompt_tokens, 
-                                                      max_length=self.max_generation_length, 
+
+        step_results = self.generator.generate_tokens(prompt_tokens,
+                                                      max_length=self.max_generation_length,
                                                       sampling_temperature=0.6,
-                                                      sampling_topk=20, 
+                                                      sampling_topk=20,
                                                       sampling_topp=1
                                                       )
         text_output = ""
 
         for word in self.generate_words(self.sp, step_results):
             text_output += word + " "
-        
+
         self.dialog.append({"role": "assistant", "content": text_output})
         return text_output
 
@@ -79,8 +79,8 @@ class LLM_Interface:
             word = sp.decode(tokens_buffer)
             if word:
                 yield word
-    
-    def build_prompt(self,sp, dialog):
+
+    def build_prompt(self, sp, dialog):
         if dialog[0]["role"] == "system":
             dialog = [
                 {
@@ -126,8 +126,11 @@ def create_llm_model():
     llm_model = LLM_Interface()
     return llm_model
 
+
 llm_model = create_llm_model()
 app = FastAPI()
+
+
 @functools.lru_cache(maxsize=1)
 def get_llm_model(config):
     config = dict(config)
@@ -139,13 +142,16 @@ def get_llm_model(config):
     llm_model.reset_internal_state(sys_p)
     return llm_model
 
+
 @app.post("/setup_character")
 async def setup(prompt: dict):
     # change from json to text
     print(prompt['config'])
     get_llm_model(tuple(sorted(prompt['config'].items())))
 
-    return {'response':'loaded_model'}
+    return {'response': 'loaded_model'}
+
+
 @app.post("/chat_character")
 async def predict(prompt: dict):
     # change from json to text
@@ -153,7 +159,7 @@ async def predict(prompt: dict):
     model = get_llm_model(tuple(sorted(config.items())))
     response = model.predict(prompt['prompt'])
 
-    return {'response':response}
+    return {'response': response}
 
 if __name__ == '__main__':
     import uvicorn
