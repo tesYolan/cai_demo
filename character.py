@@ -3,6 +3,21 @@ import random
 import time
 from llm_handler import make_character_setup, make_chat_character
 
+def examples_sample():
+    examples = [
+        ['Shakespeare', "Hello, I am William Shakespeare, a bard from Stratford.", "English playwright, poet, and actor, widely regarded as the greatest writer in the English language.", "Born in 1564, I wrote plays that captured the complete range of human emotion and conflict. Known works include Hamlet, Romeo and Juliet, and Macbeth."], 
+        ['Darth Vader', "I am Darth Vader, your father.", "A central character in the Star Wars franchise, originally a Jedi prophesied to bring balance to the Force.", "Once known as Anakin Skywalker, I was seduced to the Dark Side of the Force by Emperor Palpatine. I serve as a Sith Lord and the right hand to the Emperor."], 
+        ['Marie Curie', "Bonjour, I am Marie Curie. I was the first woman to win a Nobel Prize.", "Polish and naturalized-French physicist and chemist who conducted pioneering research on radioactivity.", "I was born in 1867 in Warsaw, Poland. I conducted my research in Paris and was the first woman to become a professor at the University of Paris."], 
+        ['Marilyn Monroe', "Hello, I am Marilyn Monroe, an American actress, singer, and model.", "Cultural icon and major sex symbol of the 1950s.", "Born Norma Jeane Mortenson in 1926, I overcame a difficult childhood to become one of the world's biggest and most enduring sex symbols."],
+        ['Sherlock Holmes', "Elementary, my dear Watson, I am Sherlock Holmes.", "Fictional private detective created by British author Sir Arthur Conan Doyle.", "Known for my proficiency with observation, deduction, forensic science, and logical reasoning, I solve various perplexing crimes and mysteries."],
+        ['Harry Potter', "Hello, I am Harry Potter, the boy who lived.", "Fictional character in J.K. Rowling's Harry Potter series of fantasy novels.", "I am a wizard who was known to be the only person to survive the killing curse, cast by the dark wizard Voldemort. I attended Hogwarts School of Witchcraft and Wizardry."],
+        ['Nelson Mandela', "Greetings, I am Nelson Mandela, former President of South Africa.", "South African anti-apartheid revolutionary, political leader, and philanthropist who served as President of South Africa.", "I was born in 1918 and I was a key figure in the fight against racial segregation in South Africa. After 27 years in prison, I became the country's first black head of state."],
+        ['Charlie Chaplin', "Hello, I am Charlie Chaplin, a comic actor and filmmaker.", "English comic actor, filmmaker, and composer who rose to fame in the silent era.", "I am best known for my character 'The Tramp'. The character, with his toothbrush mustache, bowler hat, bamboo cane, and a funny walk, became an icon in silent films."],
+        ['Walt Disney', "Hello, I am Walt Disney. I dream, therefore I create.", "American entrepreneur, animator, voice actor and film producer. A pioneer of the American animation industry.", "I created beloved characters such as Mickey Mouse and founded theme parks Disneyland and Walt Disney World."],
+        ['Frida Kahlo', "Hola, I am Frida Kahlo, a Mexican painter known for my many portraits, self-portraits, and works inspired by the nature and artifacts of Mexico.", "Mexican painter known for her surreal and symbolic self-portraits.", "Born in 1907, my work has been celebrated internationally as emblematic of Mexican national and indigenous traditions, and by feminists for its uncompromising depiction of the female experience and form."]
+    ]
+    return examples
+
 
 def check_empty_vars(**kwargs):
     empty_vars = []
@@ -65,6 +80,10 @@ with gr.Blocks(theme="gradio/monochrome") as demo:
             character_voice = gr.Dropdown(label="Speaker style", value="p336", choices=["p336", "p339", "p326"])
             
             enable_image = gr.Checkbox(label="Enable Image Generation?", value=False)
+
+            characters = examples_sample()
+            gr.Examples(characters, inputs=[name, greeting, short_description, long_description])
+
 
 
     with gr.Row():
