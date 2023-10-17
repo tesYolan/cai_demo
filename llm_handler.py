@@ -12,8 +12,7 @@ def make_character_setup(config):
         return "Error on the backend"
 def make_chat_character(config, chat_history):
     response = requests.post(character_ask, json=config)
-    print(response)
     if response.status_code == 200:
-        return response.json()['response']
+        return response.json()
     else:
         return "Error on the backend"

@@ -33,8 +33,10 @@ def chat_character(message, history, name, greeting, short_description, long_des
     }, "prompt":message}
 
     response = make_chat_character(config, "")
+    print(response)
 
     return response['response']
+
 
 
 

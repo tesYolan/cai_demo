@@ -8,7 +8,7 @@ B_INST, E_INST = "[INST]", "[/INST]"
 B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n" 
 
 class LLM_Interface:
-    def __init__(self, model_location="~/llama-2-7b-chat-ct2", system_prompt="Return a character description."):
+    def __init__(self, model_location="/home/dlpc/llama-2-7b-chat-ct2", system_prompt="Return a character description."):
         # may be in the future 'cpu' / 'cuda' when sharing with them. 
         self.generator = ctranslate2.Generator(model_location, device="cuda")
         self.sp = spm.SentencePieceProcessor(os.path.join(model_location, "tokenizer.model"))
