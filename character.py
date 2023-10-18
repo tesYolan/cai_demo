@@ -119,6 +119,18 @@ with gr.Blocks(theme="gradio/monochrome") as demo:
             start_new.click(fn=setup_new_character, inputs=[
                             name, greeting, short_description, long_description, character_voice, enable_image], outputs=[chat_interface.chatbot_state])
 
-if __name__ == "__main__":
-    demo.queue(concurrency_count=3, api_open=False).launch(
-        debug=True, server_port=9000, server_name="0.0.0.0")
+from fastapi import FastAPI
+import gradio as gr
+app = FastAPI(port=443)
+@app.get("/")
+def read_main():
+    return {"message": "Server is up. Navigate to /chat to use chat"}
+
+if __name__ == '__main__':
+    import uvicorn 
+    demo.queue(concurrency_count=3, api_open=False)
+    app = gr.mount_gradio_app(app, demo, path="/chat")
+    uvicorn.run(app, host="0.0.0.0", port=10000)
+# if __name__ == "__main__":
+#     demo.queue(concurrency_count=3, api_open=False).launch(
+#         debug=True, server_port=9000, server_name="0.0.0.0", root_path="/chat")
