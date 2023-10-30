@@ -11,4 +11,4 @@ Building the following functionalities
     - [ ] Ability to add "Good Convo's to DB"
 - [ ] Various interface tests for the model. 
 - [ ] Performance testing needed
-- [ ] Prompt handling on client side. 
+- [x] Prompt handling on client side. 
