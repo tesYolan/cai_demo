@@ -42,47 +42,86 @@ def check_empty_vars(**kwargs):
     return empty_vars
 
 
-def setup_new_character(name, greeting, short_description, long_description, character_voice, enable_image):
+def setup_new_character(name, greeting, short_description, long_description, character_voice, enable_image, prompt_state):
     empty_vars = check_empty_vars(
         name=name, greeting=greeting, short_description=short_description, long_description=long_description)
     if empty_vars:
         return []
-    config = {'config': {
+
+    # i am doing in case later i want to save it. 
+    config = {
         "name": name,
         "greeting": greeting,
         "short_description": short_description,
         "long_description": long_description,
         "character_voice": character_voice,
         "enable_image": enable_image
-    }}
-    response = make_character_setup(config)
-    print(response)
+    }
+
+    print("Prompt state is")
+    print(prompt_state)
+    print(type(prompt_state))
+
+
+    system_prompt = F"""You are roleplaying as character {config['name']} with external user. That is,  your identity/who you are is representing {config['name']}, 
+    your preferred greeting is {config['greeting']}. You describe yourself among  other things as {config['short_description']}. 
+    You biography is {config['long_description']}. 
+    Your voice is {config['character_voice']} Overall answer as the character and knowledge you have of {config['name']} in manner of how 
+    they would have responded or written in the past."""
+
+    dialog = [{"role": "system", "content": system_prompt}]
+
+    return_dict = {"dialog": dialog}
+
+    # prompt_state = gr.State(value=return_dict)
+
+    # response = make_character_setup(config)
+    # print(response)
 
     gr.Info("Character with name {} - Try Chatting".format(name))
-    return []
+    return [], return_dict
 
 
-def chat_character(message, history, name, greeting, short_description, long_description, character_voice, enable_image):
+def chat_character(message, history, name, greeting, short_description, long_description, character_voice, enable_image, prompt_state):
     empty_vars = check_empty_vars(
         name=name, greeting=greeting, short_description=short_description, long_description=long_description)
-    config = {"config": {
+
+    print("Prompt state is chat")
+    print(prompt_state)
+    print(type(prompt_state))
+    config = {
         "name": name,
         "greeting": greeting,
         "short_description": short_description,
         "long_description": long_description,
         "character_voice": character_voice,
-        "enable_image": enable_image
-    }, "prompt": message}
+        "enable_image": enable_image,
+        "prompt": message}
 
-    response = make_chat_character(config, "")
-    print(response)
-    # TODO
+    system_prompt = F"""You are roleplaying a character {config['name']}. Your identity answer is {config['name']}, 
+    your preferred greeting is {config['greeting']}. You describe yourself as {config['short_description']}. 
+    You biography is {config['long_description']}. 
+    Your voice is {config['character_voice']} Overall answer as the character and knowledge you have of {config['name']} in manner of how 
+    they would have responded or written in the past."""
 
-    return response['response']
+
+    dialog = prompt_state.get('dialog', [])
+
+        # just make sure it isn't empty. 
+    print(dialog)
+    response = make_chat_character(message,dialog ) 
+    print("Response Getting")
+    prompt_state['dialog'] = response['dialog']
+
+    history.append((message, response['response']))
+    print("This has been resolved")
+
+    return "", history, prompt_state, prompt_state
 
 
-with gr.Blocks(theme="gradio/monochrome") as demo:
+with gr.Blocks() as demo:
     gr.Markdown('<h1 style="text-align: center;"> Character Describer </h1>')
+    prompt_state = gr.State(value=dict())
     with gr.Row():
         with gr.Column():
             name = gr.Textbox(
@@ -103,22 +142,28 @@ with gr.Blocks(theme="gradio/monochrome") as demo:
 
             enable_image = gr.Checkbox(
                 label="Enable Image Generation?", value=False)
-
-            characters = examples_sample()
-            gr.Examples(characters, inputs=[
-                        name, greeting, short_description, long_description])
-
-    with gr.Row():
         with gr.Column():
             start_new = gr.Button("Start New", label="Start New")
+            chatbot = gr.Chatbot()
+            msg = gr.Textbox(interactive=True)
+            clear = gr.ClearButton([msg, chatbot])
 
-            chat_interface = gr.ChatInterface(chat_character, additional_inputs=[name, greeting, short_description, long_description, character_voice, enable_image],
-                                              title="Character Bot")
-            clear = gr.ClearButton([chat_interface])
+            characters = examples_sample()
+    with gr.Row():
+        gr.Examples(characters, inputs=[
+                        name, greeting, short_description, long_description]) #, column_widths=[50, 20, 20, 10])
+        table = gr.JSON()
+
+
+        msg.submit(chat_character, inputs=[msg,chatbot, name, greeting, short_description, long_description, character_voice, enable_image, prompt_state], outputs=[msg, chatbot, prompt_state, table])
+
+            # chat_interface = gr.ChatInterface(chat_character, additional_inputs=[name, greeting, short_description, long_description, character_voice, enable_image, prompt_state],
+            #                                   title="Character Bot")
+            # clear = gr.ClearButton([chat_interface])
             # this one calls the new character setup
-            start_new.click(fn=setup_new_character, inputs=[
-                            name, greeting, short_description, long_description, character_voice, enable_image], outputs=[chat_interface.chatbot_state])
+        start_new.click(fn=setup_new_character, inputs=[name, greeting, short_description, long_description, 
+                                                        character_voice, enable_image, prompt_state], outputs=[chatbot, prompt_state])
 
-# if __name__ == "__main__":
-#     demo.queue(concurrency_count=3, api_open=False).launch(
-#         debug=True, server_port=9000, server_name="0.0.0.0", root_path="/chat")
+if __name__ == "__main__":
+    demo.launch(
+        debug=True, server_name="0.0.0.0")

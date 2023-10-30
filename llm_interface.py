@@ -16,16 +16,17 @@ class LLM_Interface:
         self.sp = spm.SentencePieceProcessor(
             os.path.join(model_location, "tokenizer.model"))
 
-        self.dialog = []
-        self.system_prompt = system_prompt
-
         self.context_length = 4096
+
+
         self.max_generation_length = 512
+        self.sample_temperature = 0.6
+        self.sampling_topk = 20
+        self.sampling_topp = 1
 
         self.max_prompt_length = self.context_length - self.max_generation_length
-        if self.system_prompt:
-            resp = self.predict(self.system_prompt)
-            print(resp)
+
+        self.system_prompt = True
 
     def reset_internal_state(self, system_prompt):
         self.dialog = []
@@ -35,18 +36,18 @@ class LLM_Interface:
             resp = self.predict(self.system_prompt)
             print(resp)
 
-    def predict(self, prompt: str):
+    def predict(self, prompt: str, dialog: list):
         "Generate text give a prompt"
 
-        self.dialog.append({"role": "user", "content": prompt})
+        dialog.append({"role": "user", "content": prompt})
 
-        prompt_tokens = self.build_prompt(self.sp, self.dialog)
+        prompt_tokens = self.build_prompt(self.sp, dialog)
 
         if len(prompt_tokens) > self.max_prompt_length:
             if self.system_prompt:
-                self.dialog = [self.dialog[0]] + self.dialog[3:]
+                dialog = [dialog[0]] + dialog[3:]
             else:
-                self.dialog = self.dialog[2:]
+                dialog = dialog[2:]
 
         step_results = self.generator.generate_tokens(prompt_tokens,
                                                       max_length=self.max_generation_length,
@@ -58,9 +59,11 @@ class LLM_Interface:
 
         for word in self.generate_words(self.sp, step_results):
             text_output += word + " "
+        
+        print("The LLMs output is " + text_output)
 
-        self.dialog.append({"role": "assistant", "content": text_output})
-        return text_output
+        dialog.append({"role": "assistant", "content": text_output})
+        return text_output, dialog
 
     def generate_words(self, sp, step_results):
         tokens_buffer = []
@@ -134,13 +137,9 @@ app = FastAPI()
 
 @functools.lru_cache(maxsize=1)
 def get_llm_model(config):
-    config = dict(config)
+    # config = dict(config)
 
-    sys_p = F"""You are roleplaying a character {config['name']}. For question who are you? You answer {config['name']}, 
-    you start your greeting with {config['greeting']}. You describe yourself as {config['short_description']}. 
-    You biography is {config['long_description']}. 
-    Your voice is {config['character_voice']} Additionally, you answer as the character and knowledge you have of {config['name']}. Do you understand?"""
-    llm_model.reset_internal_state(sys_p)
+    # llm_model.reset_internal_state(sys_p)
     return llm_model
 
 
@@ -156,11 +155,12 @@ async def setup(prompt: dict):
 @app.post("/chat_character")
 async def predict(prompt: dict):
     # change from json to text
-    config = prompt['config']
-    model = get_llm_model(tuple(sorted(config.items())))
-    response = model.predict(prompt['prompt'])
+    # config = prompt['config']
+    # model = llm(tuple(sorted(config.items())))
+    print(prompt['dialog'])
+    response, dialog = llm_model.predict(prompt['prompt'], prompt['dialog'])
 
-    return {'response': response}
+    return {'response': response, 'dialog': dialog}
 
 if __name__ == '__main__':
     import uvicorn

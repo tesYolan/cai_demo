@@ -13,9 +13,10 @@ def make_character_setup(config):
         return "Error on the backend"
 
 
-def make_chat_character(config, chat_history):
+def make_chat_character(message, dialog):
     # chat_history is in both places. We could find it useful. 
-    response = requests.post(character_ask, json=config)
+    response = requests.post(character_ask, json={"prompt":message, "dialog": dialog})
+    print(response.json())
     if response.status_code == 200:
         return response.json()
     else:
